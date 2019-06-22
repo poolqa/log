@@ -2,6 +2,7 @@ package log
 
 import (
 	"./rotator"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/op/go-logging"
@@ -39,10 +40,25 @@ func LoadLogConfig(configJsonFile string) (*logConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	buffer = removeConfRemark(buffer)
 	config := logConfig{}
 	//strConf, _ := GoJsoner.Discard(string(buffer))
 	err = json.Unmarshal([]byte(buffer), &config)
 	return &config, err
+}
+func removeConfRemark(bConf []byte) []byte {
+	sConfLines := strings.Split(string(bConf), "\r\n")
+	buffer := bytes.Buffer{}
+	for _, line := range sConfLines {
+		newLine := strings.TrimLeft(line, " \t\r\n")
+		if len(newLine) == 0 || newLine[0] == '#' {
+			continue
+		}
+		buffer.WriteString(line + "\n")
+	}
+	out := make([]byte, buffer.Len())
+	_, _ = buffer.Read(out)
+	return out
 }
 
 func getLogLevel(strLv string) logging.Level {

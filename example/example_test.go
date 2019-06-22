@@ -13,7 +13,7 @@ func Test(t *testing.T) {
 	log.Error("err")
 	log.Critical("crit")
 	log.Fatal("fatal")
-	for i := 10000; i > 0; i-- {
+	for i := 100; i > 0; i-- {
 		log.Debugf("debug %s", "test")
 		log.Info("info")
 		log.Notice("notice")
