@@ -1,10 +1,15 @@
 # log
 
 ## benchstat
-system: windows 7 x64 sp1
-cpu(s): 8
-model name: Intel(R) Core(TM) i7-3610QM CPU @ 2.30GHz
-memery: 8G
+
+system: windows 7 x64 sp1 
+
+cpu(s): 8 
+
+model name: Intel(R) Core(TM) i7-3610QM CPU @ 2.30GHz 
+
+memery: 8G 
+
 
 ### TextPositiveWithConsole
 
