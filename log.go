@@ -18,7 +18,7 @@ func init() {
 
 func initLogDir(logFile string) error {
 	dir := filepath.Dir(logFile)
-	_, err := os.Stat(dir)    //os.Stat获取文件信息
+	_, err := os.Stat(dir) //os.Stat获取文件信息
 	if err != nil {
 		if os.IsExist(err) {
 			return nil
@@ -35,7 +35,7 @@ func initLogger(confPath string) {
 		log.Fatal(err)
 	}
 	_logger = logging.MustGetLogger("")
-
+	_logger.ExtraCalldepth = 1
 	// check log dir path
 	err = initLogDir(cfg.FileName)
 	if err != nil {
