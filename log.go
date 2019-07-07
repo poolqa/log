@@ -10,10 +10,11 @@ import (
 	"runtime/debug"
 )
 
+var LogFilePath = "./log.conf" // your can change the file path before init
 var _logger *logging.Logger
 
 func init() {
-	initLogger("./log.conf")
+	initLogger(LogFilePath)
 }
 
 func initLogDir(logFile string) error {
