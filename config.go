@@ -1,10 +1,10 @@
 package log
 
 import (
-	"./rotator"
 	"bytes"
 	"encoding/json"
 	"github.com/op/go-logging"
+	"github.com/poolqa/log/rotator"
 	"os"
 	"strings"
 )
