@@ -1,9 +1,9 @@
 package log
 
 import (
-	"./rotator"
 	"fmt"
 	"github.com/op/go-logging"
+	"github.com/poolqa/log/rotator"
 	"log"
 	"os"
 	"path/filepath"
