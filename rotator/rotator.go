@@ -34,19 +34,22 @@ import (
 type RotateDateMode int
 
 const (
-	RotateDayTimeFormat        = "20060102"
-	RotateHourTimeFormat       = "20060102_15"
-	RotateNoTimeFormat         = "20060102_15_0405"
-	compressSuffix             = ".gz"
-	msSecond             int64 = 1000
-	msHour               int64 = 3600000
-	msDay                int64 = 86400000
+	RotateDayTimeFormat          = "20060102"
+	RotateHourTimeFormat         = "20060102_15"
+	RotateMinuteTimeFormat       = "20060102_15_04"
+	RotateNoTimeFormat           = "20060102_15_0405"
+	compressSuffix               = ".gz"
+	sSecond               int64 = 1
+	sMinute               int64 = 60
+	sHour                 int64 = 3600
+	sDay                  int64 = 86400
 )
 
 const (
 	ROTATE_DATE_MODE_NO RotateDateMode = iota
 	ROTATE_DATE_MODE_DAY
 	ROTATE_DATE_MODE_HOUR
+	ROTATE_DATE_MODE_MINUTE
 )
 
 // ensure we always implement io.WriteCloser
@@ -95,10 +98,10 @@ type Logger struct {
 	ageFlag  bool
 	divisor  int64
 
-	startTime  int64
-	size       int64
-	file       *os.File
-	mu         sync.Mutex
+	startTime int64
+	size      int64
+	file      *os.File
+	mu        sync.Mutex
 
 	millCh    chan bool
 	startMill sync.Once
@@ -132,10 +135,12 @@ func NewLogger(fileName string, maxSize int, maxAge int, dateMode RotateDateMode
 		logger.ageFlag = true
 	}
 	switch logger.DateMode {
+	case ROTATE_DATE_MODE_MINUTE:
+		logger.divisor = sMinute
 	case ROTATE_DATE_MODE_HOUR:
-		logger.divisor = msHour
+		logger.divisor = sHour
 	default:
-		logger.divisor = msDay
+		logger.divisor = sDay
 	}
 	return logger
 }
@@ -278,6 +283,8 @@ func (l *Logger) backupName(name string, fileSize int64, fileTime time.Time) str
 			timestamp = fileTime.Format(RotateDayTimeFormat)
 		case ROTATE_DATE_MODE_HOUR:
 			timestamp = fileTime.Format(RotateHourTimeFormat)
+		case ROTATE_DATE_MODE_MINUTE:
+			timestamp = fileTime.Format(RotateMinuteTimeFormat)
 		default:
 			timestamp = fileTime.Format(RotateNoTimeFormat)
 		}
