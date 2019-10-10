@@ -1,10 +1,10 @@
 package log
 
 import (
-	"./rotator"
 	"bytes"
 	"encoding/json"
 	"github.com/op/go-logging"
+	"github.com/poolqa/log/rotator"
 	"os"
 	"strings"
 )
@@ -126,6 +126,8 @@ func getLogRotateMode(strMode string) rotator.RotateDateMode {
 		return rotator.ROTATE_DATE_MODE_DAY
 	case "h":
 		return rotator.ROTATE_DATE_MODE_HOUR
+	case "m":
+		return rotator.ROTATE_DATE_MODE_MINUTE
 	default:
 		return rotator.ROTATE_DATE_MODE_NO
 	}
