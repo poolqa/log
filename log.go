@@ -8,40 +8,47 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"sync"
 )
 
 //var LogFilePath = "./log.conf" // your can change the file path before init
 var _logger *logging.Logger
+
+var once sync.Once
+var _cfg *logConfig
 
 //func init() {
 //	initLogger(LogFilePath)
 //}
 
 func Default() {
-	cfg, err := LoadLogConfigJson(GetDefaultLogConfig())
+	var err error
+	_cfg, err = LoadLogConfigJson(GetDefaultLogConfig())
 	if err != nil {
 		debug.PrintStack()
 		log.Fatal(err)
 	}
-	initLogger(cfg)
+	once.Do(initLogger)
 }
 
 func InitByConfigFile(filePath string) {
-	cfg, err := LoadLogConfigFile(filePath)
+	var err error
+	_cfg, err = LoadLogConfigFile(filePath)
 	if err != nil {
 		debug.PrintStack()
 		log.Fatal(err)
 	}
-	initLogger(cfg)
+	once.Do(initLogger)
 }
 
 func InitByConfigJson(configJson string) {
-	cfg, err := LoadLogConfigJson([]byte(configJson))
+	var err error
+	_cfg, err = LoadLogConfigJson([]byte(configJson))
 	if err != nil {
 		debug.PrintStack()
 		log.Fatal(err)
 	}
-	initLogger(cfg)
+	once.Do(initLogger)
 }
 
 func initLogDir(logFile string) error {
@@ -56,36 +63,37 @@ func initLogDir(logFile string) error {
 	return nil
 }
 
-func initLogger(cfg *logConfig) {
+func initLogger() {
+	fmt.Printf("initLogger\n")
 	_logger = logging.MustGetLogger("")
 	_logger.ExtraCalldepth = 1
 	// check log dir path
-	err := initLogDir(cfg.FileName)
+	err := initLogDir(_cfg.FileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	logLevel := getLogLevel(cfg.Level)
+	logLevel := getLogLevel(_cfg.Level)
 	logging.SetLevel(logLevel, "")
 
 	backendArr := []logging.Backend{}
-	format := logging.MustStringFormatter(cfg.Format)
-	if cfg.HasConsole {
+	format := logging.MustStringFormatter(_cfg.Format)
+	if _cfg.HasConsole {
 		backendConsole := logging.NewLogBackend(os.Stdout, "", 0)
-		backendConsole.Color = cfg.Color
+		backendConsole.Color = _cfg.Color
 		backendConsoleFormatter := logging.NewBackendFormatter(backendConsole, format)
 		backendArr = append(backendArr, backendConsoleFormatter)
 	}
-	rotateMode := getLogRotateMode(cfg.DateSlice)
-	lf := rotator.NewLogger(cfg.FileName, cfg.MaxSize, cfg.MaxAge, rotateMode, false)
+	rotateMode := getLogRotateMode(_cfg.DateSlice)
+	lf := rotator.NewLogger(_cfg.FileName, _cfg.MaxSize, _cfg.MaxAge, rotateMode, false)
 	backendNormal := logging.NewLogBackend(lf, "", 0)
 	backendNormalFormatter := logging.NewBackendFormatter(backendNormal, format)
 	backendArr = append(backendArr, backendNormalFormatter)
 
-	if cfg.LevelFileName != nil && len(cfg.LevelFileName) > 0 {
-		for k, fp := range cfg.LevelFileName {
+	if _cfg.LevelFileName != nil && len(_cfg.LevelFileName) > 0 {
+		for k, fp := range _cfg.LevelFileName {
 			lvFileLevel := getLogLevel(k)
-			lvF := rotator.NewLogger(fp, cfg.MaxSize, cfg.MaxAge, rotateMode, false)
+			lvF := rotator.NewLogger(fp, _cfg.MaxSize, _cfg.MaxAge, rotateMode, false)
 			backendLv := logging.NewLogBackend(lvF, "", 0)
 			backendLvFormatter := logging.NewBackendFormatter(backendLv, format)
 			backendLvLeveled := logging.AddModuleLevel(backendLvFormatter)

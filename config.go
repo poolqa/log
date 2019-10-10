@@ -126,8 +126,6 @@ func getLogRotateMode(strMode string) rotator.RotateDateMode {
 		return rotator.ROTATE_DATE_MODE_DAY
 	case "h":
 		return rotator.ROTATE_DATE_MODE_HOUR
-	case "m":
-		return rotator.ROTATE_DATE_MODE_MINUTE
 	default:
 		return rotator.ROTATE_DATE_MODE_NO
 	}

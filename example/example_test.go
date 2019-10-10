@@ -6,7 +6,9 @@ import (
 )
 
 func Test(t *testing.T) {
+	log.Default()
 	log.InitByConfigFile("./log.conf")
+	log.InitByConfigJson(string(log.GetDefaultLogConfig()))
 	log.Debugf("debug %s", "test")
 	log.Info("info")
 	log.Notice("notice")
@@ -14,15 +16,6 @@ func Test(t *testing.T) {
 	log.Error("err")
 	log.Critical("crit")
 	log.Fatal("fatal")
-	for i := 100; i > 0; i-- {
-		log.Debugf("debug %s", "test")
-		log.Info("info")
-		log.Notice("notice")
-		log.Warn("warning")
-		log.Error("err")
-		log.Critical("crit")
-		log.Fatal("fatal")
-	}
 }
 
 func BenchmarkLogTextPositive(b *testing.B) {
