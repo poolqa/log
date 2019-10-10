@@ -1,4 +1,20 @@
 # log
+## How to use
+1. use Default
+```
+  log.Default() // you can see the default setting at config.go
+  log.Info("info")
+```
+2. use file path
+```
+  log.InitByConfigFile("./log.conf") // you can see the example at example 
+  log.Info("info")
+```
+2. use json
+```
+  log.InitByConfigJson(string(log.GetDefaultLogConfig()))
+  log.Info("info")
+```
 
 ## benchstat
 
