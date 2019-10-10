@@ -6,6 +6,7 @@ import (
 )
 
 func Test(t *testing.T) {
+	log.InitByConfigFile("./log.conf")
 	log.Debugf("debug %s", "test")
 	log.Info("info")
 	log.Notice("notice")
@@ -25,7 +26,7 @@ func Test(t *testing.T) {
 }
 
 func BenchmarkLogTextPositive(b *testing.B) {
-
+	log.Default()
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

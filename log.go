@@ -10,11 +10,38 @@ import (
 	"runtime/debug"
 )
 
-var LogFilePath = "./log.conf" // your can change the file path before init
+//var LogFilePath = "./log.conf" // your can change the file path before init
 var _logger *logging.Logger
 
-func init() {
-	initLogger(LogFilePath)
+//func init() {
+//	initLogger(LogFilePath)
+//}
+
+func Default() {
+	cfg, err := LoadLogConfigJson(GetDefaultLogConfig())
+	if err != nil {
+		debug.PrintStack()
+		log.Fatal(err)
+	}
+	initLogger(cfg)
+}
+
+func InitByConfigFile(filePath string) {
+	cfg, err := LoadLogConfigFile(filePath)
+	if err != nil {
+		debug.PrintStack()
+		log.Fatal(err)
+	}
+	initLogger(cfg)
+}
+
+func InitByConfigJson(configJson string) {
+	cfg, err := LoadLogConfigJson([]byte(configJson))
+	if err != nil {
+		debug.PrintStack()
+		log.Fatal(err)
+	}
+	initLogger(cfg)
 }
 
 func initLogDir(logFile string) error {
@@ -29,16 +56,11 @@ func initLogDir(logFile string) error {
 	return nil
 }
 
-func initLogger(confPath string) {
-	cfg, err := LoadLogConfig(confPath)
-	if err != nil {
-		debug.PrintStack()
-		log.Fatal(err)
-	}
+func initLogger(cfg *logConfig) {
 	_logger = logging.MustGetLogger("")
 	_logger.ExtraCalldepth = 1
 	// check log dir path
-	err = initLogDir(cfg.FileName)
+	err := initLogDir(cfg.FileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +95,6 @@ func initLogger(confPath string) {
 	}
 	// Set the backends to be used.
 	logging.SetBackend(backendArr...)
-
 }
 
 //log critical level

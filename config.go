@@ -12,7 +12,8 @@ import (
 const gDefaultConfigJson = `
 # 備註說明：備註不能寫在後面，只能單行由#開頭
 # Level : debug, info, notice, warn, error, critical(fatal)
-#	MaxSize : size * mb
+# MaxSize : size * mb
+# MaxAge : days
 # Color : 只有在console才會生效
 # DateSlice : d:天, h:小時
 # Format :
@@ -36,6 +37,7 @@ const gDefaultConfigJson = `
 	"HasConsole": true,
 	"Color": true,
 	"MaxSize": 0,
+	"MaxAge": 0,
 	"DateSlice": "d",
 	"Format": "%{time:2006/01/02 15:04:05.000} %{shortfile} [%{level:.4s}] %{message}"
 }
@@ -54,8 +56,8 @@ type logConfig struct {
 	Format        string
 }
 
-func LoadLogConfig(configJsonFile string) (*logConfig, error) {
-	fp, err := os.Open(configJsonFile)
+func LoadLogConfigFile(configJsonFilePath string) (*logConfig, error) {
+	fp, err := os.Open(configJsonFilePath)
 	if err == nil {
 		defer fp.Close()
 
@@ -68,18 +70,22 @@ func LoadLogConfig(configJsonFile string) (*logConfig, error) {
 		if err != nil {
 			return nil, err
 		}
-		buffer = removeConfRemark(buffer)
-		config := logConfig{}
-		err = json.Unmarshal([]byte(buffer), &config)
-		return &config, err
-	} else {
-		// get default
-		buffer := removeConfRemark([]byte(gDefaultConfigJson))
-		config := logConfig{}
-		err = json.Unmarshal(buffer, &config)
-		return &config, err
+		return LoadLogConfigJson(buffer)
 	}
+	return nil, err
 }
+
+func LoadLogConfigJson(configJson []byte) (*logConfig, error) {
+	buffer := removeConfRemark(configJson)
+	config := logConfig{}
+	err := json.Unmarshal(buffer, &config)
+	return &config, err
+}
+
+func GetDefaultLogConfig() []byte {
+	return []byte(gDefaultConfigJson)
+}
+
 func removeConfRemark(bConf []byte) []byte {
 	sConfLines := strings.Split(string(bConf), "\n")
 	buffer := bytes.Buffer{}
