@@ -64,7 +64,6 @@ func initLogDir(logFile string) error {
 }
 
 func initLogger() {
-	fmt.Printf("initLogger\n")
 	_logger = logging.MustGetLogger("")
 	_logger.ExtraCalldepth = 1
 	// check log dir path
