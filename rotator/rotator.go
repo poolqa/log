@@ -39,10 +39,10 @@ const (
 	RotateMinuteTimeFormat       = "20060102_15_04"
 	RotateNoTimeFormat           = "20060102_15_0405"
 	compressSuffix               = ".gz"
-	sSecond               int64 = 1
-	sMinute               int64 = 60
-	sHour                 int64 = 3600
-	sDay                  int64 = 86400
+	sSecond                int64 = 1
+	sMinute                int64 = 60
+	sHour                  int64 = 3600
+	sDay                   int64 = 86400
 )
 
 const (
@@ -357,7 +357,7 @@ func (l *Logger) millRunOnce() error {
 
 		var remaining []logInfo
 		for _, f := range files {
-			if f.timestamp.Before(cutoff) {
+			if f.ModTime().Before(cutoff) {
 				remove = append(remove, f)
 			} else {
 				remaining = append(remaining, f)
