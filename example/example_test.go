@@ -1,7 +1,7 @@
 package main
 
 import (
-	"../../log"
+	"github.com/poolqa/log"
 	"testing"
 )
 
@@ -11,7 +11,6 @@ func Test(t *testing.T) {
 	log.InitByConfigJson(string(log.GetDefaultLogConfig()))
 	log.Debugf("debug %s", "test")
 	log.Info("info")
-	log.Notice("notice")
 	log.Warn("warning")
 	log.Error("err")
 	log.Critical("crit")

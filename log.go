@@ -2,17 +2,20 @@ package log
 
 import (
 	"fmt"
-	"github.com/op/go-logging"
 	"github.com/poolqa/log/rotator"
+	"github.com/rs/zerolog"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"sync"
+	"time"
 )
 
 //var LogFilePath = "./log.conf" // your can change the file path before init
-var _logger *logging.Logger
+var _logger *zerolog.Logger
 
 var once sync.Once
 var _cfg *logConfig
@@ -63,118 +66,113 @@ func initLogDir(logFile string) error {
 	return nil
 }
 
+type timeHook struct{}
+
+func (h timeHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+	e.Str("time", time.Now().Format("2006/01/02 15:04:05.000"))
+}
+
+func LevelFormatter(i interface{}) string {
+	return "[" + strings.ToUpper(i.(string)[:4]) + "]"
+	//return i.(string)
+}
+
+func TimeFormatter(i interface{}) string {
+	return i.(string)
+}
+
+func MessageFormatter(i interface{}) string {
+	return i.(string)
+}
+
 func initLogger() {
-	_logger = logging.MustGetLogger("")
-	_logger.ExtraCalldepth = 1
 	// check log dir path
 	err := initLogDir(_cfg.FileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	logLevel := getLogLevel(_cfg.Level)
-	logging.SetLevel(logLevel, "")
-
-	backendArr := []logging.Backend{}
-	format := logging.MustStringFormatter(_cfg.Format)
+	writer := []io.Writer{}
 	if _cfg.HasConsole {
-		backendConsole := logging.NewLogBackend(os.Stdout, "", 0)
-		backendConsole.Color = _cfg.Color
-		backendConsoleFormatter := logging.NewBackendFormatter(backendConsole, format)
-		backendArr = append(backendArr, backendConsoleFormatter)
+		output := zerolog.ConsoleWriter{Out: os.Stdout}
+		output.FormatLevel = LevelFormatter
+		output.FormatTimestamp = TimeFormatter
+		output.FormatMessage = MessageFormatter
+		writer = append(writer, output)
 	}
 	rotateMode := getLogRotateMode(_cfg.DateSlice)
 	lf := rotator.NewLogger(_cfg.FileName, _cfg.MaxSize, _cfg.MaxAge, rotateMode, false)
-	backendNormal := logging.NewLogBackend(lf, "", 0)
-	backendNormalFormatter := logging.NewBackendFormatter(backendNormal, format)
-	backendArr = append(backendArr, backendNormalFormatter)
+	output := zerolog.ConsoleWriter{Out: lf}
+	output.FormatLevel = LevelFormatter
+	output.FormatTimestamp = TimeFormatter
+	output.FormatMessage = MessageFormatter
+	writer = append(writer, output)
 
-	if _cfg.LevelFileName != nil && len(_cfg.LevelFileName) > 0 {
-		for k, fp := range _cfg.LevelFileName {
-			lvFileLevel := getLogLevel(k)
-			lvF := rotator.NewLogger(fp, _cfg.MaxSize, _cfg.MaxAge, rotateMode, false)
-			backendLv := logging.NewLogBackend(lvF, "", 0)
-			backendLvFormatter := logging.NewBackendFormatter(backendLv, format)
-			backendLvLeveled := logging.AddModuleLevel(backendLvFormatter)
-			backendLvLeveled.SetLevel(lvFileLevel, "")
-			backendArr = append(backendArr, backendLvLeveled)
-		}
-	}
+	//if _cfg.LevelFileName != nil && len(_cfg.LevelFileName) > 0 {
+	//	for k, fp := range _cfg.LevelFileName {
+	//		lvFileLevel := getLogLevel(k)
+	//		lvF := rotator.NewLogger(fp, _cfg.MaxSize, _cfg.MaxAge, rotateMode, false)
+	//		backendLv := logging.NewLogBackend(lvF, "", 0)
+	//		backendLvFormatter := logging.NewBackendFormatter(backendLv, format)
+	//		backendLvLeveled := logging.AddModuleLevel(backendLvFormatter)
+	//		backendLvLeveled.SetLevel(lvFileLevel, "")
+	//		backendArr = append(backendArr, backendLvLeveled)
+	//	}
+	//}
+
 	// Set the backends to be used.
-	logging.SetBackend(backendArr...)
-}
+	outs := io.MultiWriter(writer...)
+	logger := zerolog.New(outs).With().Logger().Hook(timeHook{}) // .Level()
+	//_logger.ExtraCalldepth = 1
+	_logger = &logger
 
-//log critical level
-func Critical(a ...interface{}) {
-	_logger.Critical(a...)
-}
-
-//log critical format
-func Criticalf(format string, a ...interface{}) {
-	_logger.Criticalf(format, a...)
 }
 
 //log critical level
 func Fatal(a ...interface{}) {
-	_logger.Critical(a...)
+	_logger.Fatal().Msg(fmt.Sprint(a...))
 }
 
 //log critical format
 func Fatalf(format string, a ...interface{}) {
-	_logger.Criticalf(format, a...)
+	_logger.Fatal().Msgf(format, a...)
 }
 
 //log error level
 func Error(a ...interface{}) {
-	_logger.Error(a...)
+	_logger.Error().Msg(fmt.Sprint(a...))
 }
 
 //log error format
 func Errorf(format string, a ...interface{}) {
-	_logger.Errorf(format, a...)
+	_logger.Error().Msgf(format, a...)
 }
 
 //log warning level
 func Warn(a ...interface{}) {
-	_logger.Warning(a...)
+	_logger.Warn().Msg(fmt.Sprint(a...))
 }
 
 //log warning format
 func Warnf(format string, a ...interface{}) {
-	_logger.Warningf(format, a...)
-}
-
-//log notice level
-func Notice(a ...interface{}) {
-	_logger.Notice(a...)
-}
-
-//log notice format
-func Noticef(format string, a ...interface{}) {
-	_logger.Noticef(format, a...)
+	_logger.Warn().Msgf(format, a...)
 }
 
 //log info level
 func Info(a ...interface{}) {
-	_logger.Info(a...)
+	_logger.Info().Msg(fmt.Sprint(a...))
 }
 
 //log info format
 func Infof(format string, a ...interface{}) {
-	_logger.Infof(format, a...)
+	_logger.Info().Msgf(format, a...)
 }
 
 //log debug level
 func Debug(a ...interface{}) {
-	_logger.Debug(a...)
+	_logger.Debug().Msg(fmt.Sprint(a...))
 }
 
 //log debug format
 func Debugf(format string, a ...interface{}) {
-	_logger.Debugf(format, a...)
-}
-
-func printError(message string) {
-	fmt.Println(message)
-	os.Exit(0)
+	_logger.Debug().Msgf(format, a...)
 }
