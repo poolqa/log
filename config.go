@@ -43,7 +43,7 @@ const gDefaultConfigJson = `
 }
 `
 
-type logConfig struct {
+type LogConfig struct {
 	Level         string
 	FileName      string
 	LevelFileName map[string]string
@@ -56,7 +56,7 @@ type logConfig struct {
 	Format        string
 }
 
-func LoadLogConfigFile(configJsonFilePath string) (*logConfig, error) {
+func LoadLogConfigFile(configJsonFilePath string) (*LogConfig, error) {
 	fp, err := os.Open(configJsonFilePath)
 	if err == nil {
 		defer fp.Close()
@@ -75,9 +75,9 @@ func LoadLogConfigFile(configJsonFilePath string) (*logConfig, error) {
 	return nil, err
 }
 
-func LoadLogConfigJson(configJson []byte) (*logConfig, error) {
+func LoadLogConfigJson(configJson []byte) (*LogConfig, error) {
 	buffer := removeConfRemark(configJson)
-	config := logConfig{}
+	config := LogConfig{}
 	err := json.Unmarshal(buffer, &config)
 	return &config, err
 }
@@ -126,6 +126,8 @@ func getLogRotateMode(strMode string) rotator.RotateDateMode {
 		return rotator.ROTATE_DATE_MODE_DAY
 	case "h":
 		return rotator.ROTATE_DATE_MODE_HOUR
+	case "m":
+		return rotator.ROTATE_DATE_MODE_MINUTE
 	default:
 		return rotator.ROTATE_DATE_MODE_NO
 	}

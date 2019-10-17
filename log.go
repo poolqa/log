@@ -15,7 +15,7 @@ import (
 var _logger *logging.Logger
 
 var once sync.Once
-var _cfg *logConfig
+var _cfg *LogConfig
 
 //func init() {
 //	initLogger(LogFilePath)
@@ -48,6 +48,11 @@ func InitByConfigJson(configJson string) {
 		debug.PrintStack()
 		log.Fatal(err)
 	}
+	once.Do(initLogger)
+}
+
+func InitByConfigStruct(conf *LogConfig) {
+	_cfg = conf
 	once.Do(initLogger)
 }
 
