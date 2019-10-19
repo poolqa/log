@@ -78,7 +78,7 @@ func initLogger() {
 	}
 
 	logLevel := getLogLevel(_cfg.Level)
-	logging.SetLevel(logLevel, "")
+	//logging.SetLevel(logLevel, "")
 
 	backendArr := []logging.Backend{}
 	format := logging.MustStringFormatter(_cfg.Format)
@@ -86,13 +86,17 @@ func initLogger() {
 		backendConsole := logging.NewLogBackend(os.Stdout, "", 0)
 		backendConsole.Color = _cfg.Color
 		backendConsoleFormatter := logging.NewBackendFormatter(backendConsole, format)
-		backendArr = append(backendArr, backendConsoleFormatter)
+		backendConsoleLvLeveled := logging.AddModuleLevel(backendConsoleFormatter)
+		backendConsoleLvLeveled.SetLevel(logLevel, "")
+		backendArr = append(backendArr, backendConsoleLvLeveled)
 	}
 	rotateMode := getLogRotateMode(_cfg.DateSlice)
 	lf := rotator.NewLogger(_cfg.FileName, _cfg.MaxSize, _cfg.MaxAge, rotateMode, false)
 	backendNormal := logging.NewLogBackend(lf, "", 0)
 	backendNormalFormatter := logging.NewBackendFormatter(backendNormal, format)
-	backendArr = append(backendArr, backendNormalFormatter)
+	backendNormalLvLeveled := logging.AddModuleLevel(backendNormalFormatter)
+	backendNormalLvLeveled.SetLevel(logLevel, "")
+	backendArr = append(backendArr, backendNormalLvLeveled)
 
 	if _cfg.LevelFileName != nil && len(_cfg.LevelFileName) > 0 {
 		for k, fp := range _cfg.LevelFileName {
