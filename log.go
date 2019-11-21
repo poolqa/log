@@ -17,9 +17,10 @@ var _logger *logging.Logger
 var once sync.Once
 var _cfg *LogConfig
 
-//func init() {
-//	initLogger(LogFilePath)
-//}
+func init() {
+	_logger = logging.MustGetLogger("")
+	_logger.ExtraCalldepth = 1
+}
 
 func Default() {
 	var err error
