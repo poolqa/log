@@ -98,7 +98,7 @@ type Logger struct {
 	ageFlag  bool
 	divisor  int64
 
-	startTime int64
+	startTime time.Time
 	size      int64
 	file      *os.File
 	mu        sync.Mutex
@@ -217,12 +217,16 @@ func (l *Logger) rotate() error {
 	return nil
 }
 
-func (l *Logger) sameTime(modTime int64) bool {
-	nowTime := time.Now().Unix() / l.divisor
-	if modTime/l.divisor != nowTime {
-		return false
+func (l *Logger) sameTime(modTime time.Time) bool {
+	now := time.Now()
+	switch l.DateMode {
+	case ROTATE_DATE_MODE_MINUTE:
+		return now.Year() == modTime.Year() && now.Month() == modTime.Month() && now.Day() == modTime.Day() && now.Hour() == modTime.Hour() && now.Minute() == modTime.Minute()
+	case ROTATE_DATE_MODE_HOUR:
+		return now.Year() == modTime.Year() && now.Month() == modTime.Month() && now.Day() == modTime.Day() && now.Hour() == modTime.Hour()
+	default:
+		return now.Year() == modTime.Year() && now.Month() == modTime.Month() && now.Day() == modTime.Day()
 	}
-	return true
 }
 
 // openNew opens a new log file for writing, moving any old log file out of the
@@ -260,7 +264,7 @@ func (l *Logger) openNew() error {
 	}
 	l.file = f
 	l.size = 0
-	l.startTime = time.Now().Unix()
+	l.startTime = time.Now()
 	return nil
 }
 
@@ -310,7 +314,7 @@ func (l *Logger) openExistingOrNew() error {
 
 	if l.sizeFlag && info.Size() >= l.max() {
 		return l.rotate()
-	} else if l.DateMode != ROTATE_DATE_MODE_NO && !l.sameTime(info.ModTime().Unix()) {
+	} else if l.DateMode != ROTATE_DATE_MODE_NO && !l.sameTime(info.ModTime()) {
 		return l.rotate()
 	}
 
@@ -322,7 +326,7 @@ func (l *Logger) openExistingOrNew() error {
 	}
 	l.file = file
 	l.size = info.Size()
-	l.startTime = info.ModTime().Unix()
+	l.startTime = info.ModTime()
 	return nil
 }
 
@@ -352,17 +356,7 @@ func (l *Logger) millRunOnce() error {
 	var compress, remove []logInfo
 
 	if l.MaxAge > 0 {
-		var diff time.Duration
-		switch l.DateMode {
-		case ROTATE_DATE_MODE_DAY:
-			diff = time.Duration(int64(24*time.Hour) * int64(l.MaxAge))
-		case ROTATE_DATE_MODE_HOUR:
-			diff = time.Duration(int64(time.Hour) * int64(l.MaxAge))
-		case ROTATE_DATE_MODE_MINUTE:
-			diff = time.Duration(int64(time.Minute) * int64(l.MaxAge))
-		default:
-			diff = time.Duration(int64(24*time.Hour) * int64(l.MaxAge))
-		}
+		diff := time.Duration(int64(24*time.Hour) * int64(l.MaxAge))
 		cutoff := currentTime().Add(-1 * diff)
 
 		var remaining []logInfo
@@ -471,10 +465,6 @@ func (l *Logger) timeFromName(filename, prefix, ext string) (time.Time, error) {
 		return t, err
 	}
 	t, err = time.Parse(RotateHourTimeFormat, ts)
-	if err == nil {
-		return t, err
-	}
-	t, err = time.Parse(RotateMinuteTimeFormat, ts)
 	if err == nil {
 		return t, err
 	}
